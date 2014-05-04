@@ -1,0 +1,3 @@
+# BitmapManipulator
+
+A very basic manipulator...
