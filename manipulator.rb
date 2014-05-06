@@ -233,6 +233,45 @@ class BitmapManipulator
     end
   end
 
+  # Reflect the current image either horizontally or vertically.
+  #
+  # @param [Boolean] Horizontal? Are we fliping the image horizontally or vertically?
+  def reflect_image(horizontal)
+    # Create a temporary image to hold our data
+    temp = Array.new
+
+    # How many columns and rows are there?
+    cols = @image.length-1
+    rows = @image[0].length-1
+
+    # Create our ranges to loop through...
+    if horizontal
+      cols = cols.downto(0)
+      rows = 0..rows
+    else
+      cols = 0..cols
+      rows = rows.downto(0)
+    end
+
+    # Rebuild our image
+    cols.each do |x|
+      row = Array.new
+
+      # Iterate over each of the elements in a row.
+      rows.each do |y|
+        row << @image[x][y] # Save a placeholder colour pixel
+      end
+
+      temp << row
+    end
+
+    # Save our image
+    @image = temp
+
+    #Ask for more input
+    get_input
+  end
+
   # Attempt to create an image using the user's provided input.
   #
   # Check the user's input, ensuring that the data
@@ -366,18 +405,20 @@ class BitmapManipulator
     end
   end
 
-  # Prepare for and attempt to flip the image horizontally
+  # Prepare for and attempt to reflect the image horizontally
   # or vertically.
   #
   # @param [Array] Input The input array that the user has entered i.e. ['I', '102', '303']
-  def attempt_flip(input)
+  def attempt_reflect(input)
     # Do not proceed if there is no image
     if @image.nil?
-      image_error "flip the image"
+      image_error "reflect the image"
     else
       direction = input[1]
 
-      case direction
+      if direction == "H" || direction == "V"
+        reflect_image (direction == "H")? true : false
+      end
     end
   end
 
