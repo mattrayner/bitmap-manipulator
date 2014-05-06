@@ -591,7 +591,7 @@ class BitmapManipulator
   def print_help
     puts <<-HELP_TEXT
 
-Basic Ruby Bitmap manipulator
+Basic Ruby Bitmap Manipulator
 -----------------------------
 Commands:
   I [width] [height]         # Create an image that is [width] wide and [height] high. NOTE [height] cannot exceed 250.
