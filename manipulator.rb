@@ -20,96 +20,204 @@
 #     - Exit out of the session (with error code 0)
 
 # Thoughts:
-#   - OptionParser would be good for process of commands BUT
-#     not designed for this form of work? Primarily for
-#     application arguments.
+#   - OptionParser would be good for processing of commands - appears overly complex for this implementation
 
-# Gobal variables
-@image = nil
-@most = 0
-@number = 0
+class BitmapManipulator
+  # Gobal variables
+  @image = nil, @most = 0, @number = 0
 
-# Present the user with a prompt and pass what is entered off
-# for processing.
-def get_input
-  print "> "
-  input = STDIN.gets
+  # When a new BitmapManipulator is created
+  # begin listening for user input.
+  def initialize
+    get_input
+  end
 
-  process_input input
-end
+  # Create a new blank bitmap image.
+  #
+  # @param [Integer] Most The number of columns.
+  # @param [Integer] Number The number of rows.
+  def create_image(most, number)
+    columns = Array.new
 
-# Process the user's input, classifying the command entered or
-# returning a help message if a suitable command is not found.
-#
-# @param [String] command The command entered by the user
-def process_input(input)
-  #What commands can we take?
-  print_help
-end
+    col_range = 0..(most-1) # Create a range for our columns
+    row_range = 0..(number-1) # Create a range for our rows
 
-# Print out instructions with all of the accepted commands a
-# user can enter.
-def print_help
-  puts "This is help text"
-end
+    # Iterate over each column and create a row.
+    col_range.each do
+      row = Array.new
 
-# Colour a specified pixel with the colour supplied.
-#
-# @param [Integer] X The X co-ordinate of the pixed to be coloured.
-# @param [Integer] Y The Y co-ordinate of the pixed to be coloured.
-# @param [Char] Colour The colour to be entered.
-def colour_pixel(x, y, colour)
-  @image[x][y] = colour
-end
+      # Iterate over each of the elements in a row.
+      row_range.each do
+        row << "O" # Save a 'O' colour pixel
+      end
 
-# Create a new blank bitmap image.
-#
-# @param [Integer] Most The number of columns.
-# @param [Integer] Number The number of rows.
-def create_image(most, number)
-  columns = Array.new
-
-  # Iterate over each column and create a row.
-  0..(most-1).each do
-    row = Array.new
-
-    # Iterate over each of the elements in a row.
-    0..(number-1).each do
-      row << 0
+      columns << row
     end
 
-    columns << row
+    # Save our image
+    @image = columns
+    # Save the user's dimentions (use for clearing)
+    @most = most
+    @number = number
+
+    # Ask for more input
+    get_input
   end
 
-  @image = columns
-end
+  # Show the image currently within the manipulator but outputting it
+  # in the following format:
+  # 0X000
+  # 000J0
+  # 00AJ0
+  # 00HH0
+  def show_image
+    # Check to see if we have an image
+    if @image.nil?
+      puts "No image to show. Try running 'I 1 2' and try again."
+    else
+      # Create a string to hold our output
+      output_string = ""
+      
+      # Get a column & row range
+      col_range = 0..(@most-1) # Create a range for our columns
+      row_range = 0..(@number-1)
 
-# Draw a vertical line within our bitmap.
-#
-# @param [Integer] X The X position within our bitmap.
-# @param [Integer] Y1 The Y starting position within the bitmap.
-# @param [Integer] Y2 The Y end position eithin the bitmap.
-# @param [Char] Colour The colour of our line.
-def create_vertical_line(x, y1, y2, colour)
-  range = y1..y2
+      # Iterate over every row first
+      row_range.each do |y|
+        # Iterate over each column
+        col_range.each do |x|
+          output_string += @image[x][y] # Add every pixel to our output string
+        end
 
-  range.each do |n|
-    colour_pixel x n colour
+        # Add a line break
+        output_string += "\n"
+      end
+
+      puts output_string
+    end
+
+    # Ask for more input
+    get_input
+  end
+
+  # Colour a specified pixel with the colour supplied.
+  #
+  # @param [Integer] X The X co-ordinate of the pixed to be coloured.
+  # @param [Integer] Y The Y co-ordinate of the pixed to be coloured.
+  # @param [Char] Colour The colour to be entered.
+  def colour_pixel(x, y, colour)
+    @image[x][y] = colour
+  end
+
+  # Draw a vertical line within our bitmap.
+  #
+  # @param [Integer] X The X position within our bitmap.
+  # @param [Integer] Y1 The Y starting position within the bitmap.
+  # @param [Integer] Y2 The Y end position eithin the bitmap.
+  # @param [Char] Colour The colour of our line.
+  def create_vertical_line(x, y1, y2, colour)
+    range = y1..y2
+
+    range.each do |n|
+      colour_pixel x n colour
+    end
+  end
+
+  # Draw a horizontal line within our bitmap.
+  #
+  # @param [Integer] X1 The X starting position within our bitmap.
+  # @param [Integer] X2 The X end position within the bitmap.
+  # @param [Integer] Y The Y position within the bitmap.
+  # @param [Char] Colour The colour of our line.
+  def create_horizontal_line(x1, x2, y, colour)
+    range = x1..x2
+
+    range.each do |n|
+      colour_pixel n y colour
+    end
+  end
+
+  # Close the application with or without an error code
+  #
+  # @param [Integer] Code The error code to close the application with
+  def close(code = 0)
+    exit code
+  end
+
+  private 
+  # Present the user with a prompt and pass what is entered off
+  # for processing.
+  def get_input
+    print "> "
+    input = STDIN.gets
+
+    process_input input
+  end
+
+  # Process the user's input, classifying the command entered or
+  # returning a help message if a suitable command is not found.
+  #
+  # @param [String] command The command entered by the user
+  def process_input(input)
+    # Grab the command
+    input = input.split(' ')
+
+    # Ensure we have an input
+    if input.length > 0
+      case input[0]
+      when "X" # Close the application
+        close
+      when "I" # Create an image
+        attempt_image_creation input #Verify our input array and attempt to create an image
+      when "C" # Clear the saved image
+        attempt_image_clear
+      when "S" # Show the image stored
+        show_image
+      end
+    end
+
+    print_help
+  end
+
+  # Print out instructions with all of the accepted commands a
+  # user can enter.
+  def print_help
+    puts "This is help text"
+    get_input
+  end
+
+  # Check the user's input, ensuring that the data
+  # required is both present and in the correct format
+  #
+  # @param 
+  def attempt_image_creation(input)
+    #Get the X and Y values or nil
+    x = string_to_int input[1]
+    y = string_to_int input[2]
+
+    if (!x.nil? && !y.nil?) then create_image(x, y) else error "Cannot create image with sizes '#{input[1]}'x'#{input[2]}'.\n\nPlease try again with numbers." end
+  end
+
+  # Attempt to clear the currently stored image (by creating a new one)
+  def attempt_image_clear
+    if !@image.nil? then create_image(@most, @number) else error "Cannot clear an image that doesn't exist.\n\nTry running 'I 1 2' first and try again." end
+  end
+
+  # Convert the string passed into an integer to be used as
+  # co-ordinated in our bitmap.
+  #
+  # @param [String] String The string to be converted
+  # @return [Integer] Int The converted integer OR NIL
+  def string_to_int(string)
+    (string.nil?)? nil : string.delete(',').to_i # Allow for 2,364 => 2364 conversion
+  end
+
+  # Create an error output and then ask for more input from the user.
+  # 
+  # @param [String] Error The string to be output
+  def error(string)
+    puts string
+    get_input
   end
 end
-
-# Draw a horizontal line within our bitmap.
-#
-# @param [Integer] X1 The X starting position within our bitmap.
-# @param [Integer] X2 The X end position within the bitmap.
-# @param [Integer] Y The Y position within the bitmap.
-# @param [Char] Colour The colour of our line.
-def create_horizontal_line(x1, x2, y, colour)
-  range = x1..x2
-
-  range.each do |n|
-    colour_pixel n y colour
-  end
-end
-
-get_input
+BitmapManipulator.new
