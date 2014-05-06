@@ -73,7 +73,7 @@ class BitmapManipulator
   def show_image
     # Check to see if we have an image
     if @image.nil?
-      puts "No image to show. Try running 'I 1 2' and try again."
+      image_error "show an image"
     else
       # Create a string to hold our output
       output_string = ""
@@ -104,12 +104,13 @@ class BitmapManipulator
   #
   # @param [Integer] X The X co-ordinate of the pixed to be coloured.
   # @param [Integer] Y The Y co-ordinate of the pixed to be coloured.
-  # @param [Char] Colour The colour to be entered.
-  def colour_pixel(x, y, colour)
+  # @param [String] Colour The colour to be entered.
+  # @param [Boolean] Surpress Should we supress the final get_input call?
+  def colour_pixel(x, y, colour, surpress_input = false)
     @image[x][y] = colour
 
     # Ask for more input
-    get_input
+    get_input if !surpress_input
   end
 
   # Draw a vertical line within our bitmap.
@@ -119,11 +120,13 @@ class BitmapManipulator
   # @param [Integer] Y2 The Y end position eithin the bitmap.
   # @param [Char] Colour The colour of our line.
   def create_vertical_line(x, y1, y2, colour)
-    range = y1..y2
+    range = (y1 < y2)? y1..y2 : y2..y1
 
     range.each do |n|
-      colour_pixel x n colour
+      colour_pixel x, n, colour, true
     end
+
+    get_input
   end
 
   # Draw a horizontal line within our bitmap.
@@ -133,11 +136,13 @@ class BitmapManipulator
   # @param [Integer] Y The Y position within the bitmap.
   # @param [Char] Colour The colour of our line.
   def create_horizontal_line(x1, x2, y, colour)
-    range = x1..x2
+    range = (x1 < x2)? x1..x2 : x2..x1
 
     range.each do |n|
-      colour_pixel n y colour
+      colour_pixel n, y, colour, true
     end
+
+    get_input
   end
 
   # Close the application with or without an error code
@@ -176,8 +181,10 @@ class BitmapManipulator
         attempt_image_clear
       when "S" # Show the image stored
         show_image
-      when "L"
-        attempt_pixel_colour input # Colour a specific pixel within our image
+      when "L" # Colour a specific pixel within our image
+        attempt_pixel_colour input
+      when "V" # Draw a vertical line with the colour passed
+        attempt_vertical_line input
       end
     end
 
@@ -207,10 +214,10 @@ class BitmapManipulator
 
   # Attempt to clear the currently stored image (by creating a new one)
   def attempt_image_clear
-    if !@image.nil? then create_image(@most, @number) else error "Cannot clear an image that doesn't exist.\n\nTry running 'I 1 2' first and try again." end
+    if !@image.nil? then create_image(@most, @number) else image_error "clear the image" end
   end
 
-  # Attempt to create an image using the user's provided input.
+  # Attempt to colour a pixel using the user's provided input.
   #
   # Check the user's input, ensuring that the data
   # required is both present and in the correct format
@@ -219,7 +226,7 @@ class BitmapManipulator
   def attempt_pixel_colour(input)
     # Do not proceed if there is no image
     if @image.nil?
-      error "Cannot colour a pixel if there is no image.\n\nTry running 'I 1 2' first and try again."
+      image_error "colour a pixel"
     else
       # Get the X and Y values or nil
       x = string_to_int input[1]
@@ -230,12 +237,41 @@ class BitmapManipulator
 
       # Check our colour first
       if colour.nil?
-        error "Cannot colour pixel with the value entered:\n  - Colours can only be one character long i.e. 'R' not 'Red'.\n  - Colours must be uppercase i.e. 'R' not 'r'.\n\nPlease try again with a valid colour."
+        colour_error
       else
         # Make sure that the x & y values are not nil and that they are in-bounds (adjusting for 1 => 0)
         if ((!x.nil? && !y.nil?) && (x-1 <= @most && y-1 <= @number)) then colour_pixel(x-1, y-1, colour) else error "Cannot colour pixel '#{input[1]}'x'#{input[2]}'.\n\nPlease try again with valid co-ordinates." end
       end
 
+    end
+  end
+
+  # Attempt to draw a vertical line using the user's provided input.
+  #
+  # Check the user's input, ensuring that the data
+  # required is both present and in the correct format
+  #
+  # @param [Array] Input The input array that the user has entered i.e. ['I', '102', '303']
+  def attempt_vertical_line(input)
+    # Do not proceed if there is no image
+    if @image.nil?
+      image_error "draw a vertical line"
+    else
+      # Get the X and Y values or nil
+      x = string_to_int input[1]
+      y1 = string_to_int input[2]
+      y2 = string_to_int input[3]
+
+      # Check the colour value is acceptable
+      colour = string_to_colour input[4]
+
+      # Check our colour first
+      if colour.nil?
+        colour_error
+      else
+        # Make sure that the x & y values are not nil and that they are in-bounds (adjusting for 1 => 0)
+        if ((!x.nil? && !y1.nil? && !y2.nil?) && (valid_x_coord(x) && valid_y_coord(y1) && valid_y_coord(y2))) then create_vertical_line(x-1, y1-1, y2-1, colour) else error "Cannot create a line with the co-ordinates provided.\n\nPlease try again with valid co-ordinates." end
+      end
     end
   end
   
@@ -272,10 +308,48 @@ class BitmapManipulator
 
   # Create an error output and then ask for more input from the user.
   # 
-  # @param [String] Error The string to be output
+  # @param [String] Error The string to be output.
   def error(string)
     puts string
     get_input
   end
+
+  # Output the standard colour error used throughout the applicationl
+  def colour_error
+    errorr "Cannot colour pixel with the value entered:\n  - Colours can only be one character long i.e. 'R' not 'Red'.\n  - Colours must be uppercase i.e. 'R' not 'r'.\n\nPlease try again with a valid colour."
+  end
+
+  # Output the standard 'no image' error used throughout the application.
+  #
+  # @param [String] Error The custom helper text for this error
+  def image_error(error_msg = "continue")
+    error "Cannot #{error_msg} if there is no image.\n\nTry running 'I 1 2' first and try again."
+  end
+
+  # Check to see if the X co-ordinate provided is valid
+  # 
+  # @param [Integer] Co-ordinate The co-ordinate to be checked
+  # @return [Boolean] Result Is the co-ordinate valid?
+  def valid_x_coord(coord)
+    valid_coord coord, @most
+  end
+
+  # Check to see if the Y co-ordinate provided is valid
+  # 
+  # @param [Integer] Co-ordinate The co-ordinate to be checked
+  # @return [Boolean] Result Is the co-ordinate valid?
+  def valid_y_coord(coord)
+    valid_coord coord, @number
+  end
+
+  # Check that the co-ordinate provided is within co-ordinate bounds
+  #
+  # @param [Integer] Co-ordinate The co-ordinate to be checked
+  # @param [Integer] Upper The Upped-bound to check against
+  # @return [Boolean] Result Is the co-ordinate within the bounds?
+  def valid_coord(coord, upper)
+    (coord >= 1 && coord <= upper)
+  end
+
 end
 BitmapManipulator.new
