@@ -197,6 +197,8 @@ class BitmapManipulator
     get_input
   end
 
+
+=begin !!!!!!!! UN-USED RECURSIVE ALGORHYTHMS - HIT THE END OF STACK ON LARGER IMAGES !!!!!!!!!!
   # Fill an 'area' within the image using recursion to move around
   #
   # @param [Integer] X The x co-ordinate to fill
@@ -227,6 +229,93 @@ class BitmapManipulator
 
       # If this is the first caller then ask for more input
       get_input if first_caller
+    else
+      # The target colour we have specified is the same as the reigon colour (this will cause an endless loop)
+      error "You are targeting a pixel that is already #{target_colour}.\n\nPlease try another co-ordinate."
+    end
+  end
+
+  # Fewer recursive calles
+  def fill_area_lighter(x, y, target_colour, reigon_colour, first_caller = false)
+    # Prevent an endless loop
+    if target_colour != reigon_colour
+      # Attempt less recursion
+      current_colour = @image[x][y]
+
+      if current_colour.eql? reigon_colour
+        @image[x][y] = target_colour
+
+        #Can we move up?
+        up = (@image[x][y-1] == reigon_colour)
+        right = !@image[x+1].nil?
+        down = (@image[x][y+1] == reigon_colour)
+        left = !@image[x-1].nil?
+
+        fill_area_lighter x, y-1, target_colour, reigon_colour if up
+        fill_area_lighter x+1, y, target_colour, reigon_colour if right
+        fill_area_lighter x, y+1, target_colour, reigon_colour if down
+        fill_area_lighter x-1, y, target_colour, reigon_colour if left
+      end
+
+      get_input if first_caller
+    else
+      # The target colour we have specified is the same as the reigon colour (this will cause an endless loop)
+      error "You are targeting a pixel that is already #{target_colour}.\n\nPlease try another co-ordinate."
+    end
+  end
+=end
+
+
+  # Fill an 'area' within the image using the flood fill algorhythm to move around
+  # This algorhythm has been chosen to prevent us from reaching the obttom of the stack.
+  #
+  # Using a string so that we can use the .include? command easily.
+  #
+  # @param [Integer] X The x co-ordinate to start filling
+  # @param [Integer] Y The y co-ordinate to start filling
+  # @param [String] Target The colour to fill the area with
+  # @param [String] Reigon The colour that we want to change from
+  def fill_area_flood(x, y, target_colour, reigon_colour)
+    # Prevent an endless loop
+    if target_colour != reigon_colour
+      # Create a queue array
+      queue = Array.new
+
+      # Add the current co-ordinates to our queue
+      queue << "#{x},#{y}"
+
+      i = 0
+
+      begin
+        # Get the current node
+        current = queue[i]
+        current = current.split(',')
+
+        #get the current x & y
+        cX = current[0].to_i
+        cY = current[1].to_i
+
+        current_colour = @image[cX][cY]
+
+        if current_colour.eql? reigon_colour
+          @image[cX][cY] = target_colour
+
+          #Can we move?
+          up = (cY-1 >= 0 && cY-1 < @number)
+          right = (cX+1 >= 0 && cX+1 < @most)
+          down = (cY+1 >= 0 && cY+1 < @number)
+          left = (cX-1 >= 0 && cX-1 < @most)
+
+          queue << "#{cX},#{cY-1}" if up && (!queue.include? "#{cX},#{cY-1}")
+          queue << "#{cX+1},#{cY}" if right && (!queue.include? "#{cX+1},#{cY}")
+          queue << "#{cX},#{cY+1}" if down && (!queue.include? "#{cX},#{cY+1}")
+          queue << "#{cX-1},#{cY}" if left && (!queue.include? "#{cX-1},#{cY}")
+        end
+
+        i += 1
+      end while queue.length > i
+
+      get_input
     else
       # The target colour we have specified is the same as the reigon colour (this will cause an endless loop)
       error "You are targeting a pixel that is already #{target_colour}.\n\nPlease try another co-ordinate."
@@ -400,7 +489,7 @@ class BitmapManipulator
       if colour.nil?
         colour_error
       else
-        if ((!x.nil? && !y.nil?) && (valid_x_coord(x-1) && valid_y_coord(y-1))) then fill_area(x-1, y-1, colour, @image[x-1][y-1], true) else error "Cannot fill area using the co-ordinates provided.\n\nPlease try again with valid co-ordinates." end
+        if ((!x.nil? && !y.nil?) && (valid_x_coord(x-1) && valid_y_coord(y-1))) then fill_area_flood(x-1, y-1, colour, @image[x-1][y-1]) else error "Cannot fill area using the co-ordinates provided.\n\nPlease try again with valid co-ordinates." end
       end
     end
   end
@@ -501,6 +590,7 @@ class BitmapManipulator
   # user can enter.
   def print_help
     puts <<-HELP_TEXT
+
 Basic Ruby Bitmap manipulator
 -----------------------------
 Commands:
@@ -513,6 +603,7 @@ Commands:
   R [direction "H" || "V"]   # Reflect (flip) the image either vertically or horizontally.
   S                          # Show the image as it currently is.
   X                          # Exit - close out of the application.    
+
     HELP_TEXT
     get_input
   end
