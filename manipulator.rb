@@ -5,6 +5,9 @@
 # @data 04/04/14
 # @version 0.5
 
+# Design Decision:
+#   - Decision to keep the project as vanilla ruby at this stage.
+
 # Process:
 #   - Take input from user
 #   - Work out what they want to do
@@ -21,8 +24,13 @@
 #     not designed for this form of work? Primarily for
 #     application arguments.
 
+# Gobal variables
+@image = nil
+@most = 0
+@number = 0
 
-# Present the user with an input and process what is submitted.
+# Present the user with a prompt and pass what is entered off
+# for processing.
 def get_input
   print "> "
   input = STDIN.gets
@@ -43,6 +51,65 @@ end
 # user can enter.
 def print_help
   puts "This is help text"
+end
+
+# Colour a specified pixel with the colour supplied.
+#
+# @param [Integer] X The X co-ordinate of the pixed to be coloured.
+# @param [Integer] Y The Y co-ordinate of the pixed to be coloured.
+# @param [Char] Colour The colour to be entered.
+def colour_pixel(x, y, colour)
+  @image[x][y] = colour
+end
+
+# Create a new blank bitmap image.
+#
+# @param [Integer] Most The number of columns.
+# @param [Integer] Number The number of rows.
+def create_image(most, number)
+  columns = Array.new
+
+  # Iterate over each column and create a row.
+  0..(most-1).each do
+    row = Array.new
+
+    # Iterate over each of the elements in a row.
+    0..(number-1).each do
+      row << 0
+    end
+
+    columns << row
+  end
+
+  @image = columns
+end
+
+# Draw a vertical line within our bitmap.
+#
+# @param [Integer] X The X position within our bitmap.
+# @param [Integer] Y1 The Y starting position within the bitmap.
+# @param [Integer] Y2 The Y end position eithin the bitmap.
+# @param [Char] Colour The colour of our line.
+def create_vertical_line(x, y1, y2, colour)
+  range = y1..y2
+
+  range.each do |n|
+    colour_pixel x n colour
+  end
+end
+
+# Draw a horizontal line within our bitmap.
+#
+# @param [Integer] X1 The X starting position within our bitmap.
+# @param [Integer] X2 The X end position within the bitmap.
+# @param [Integer] Y The Y position within the bitmap.
+# @param [Char] Colour The colour of our line.
+def create_horizontal_line(x1, x2, y, colour)
+  range = x1..x2
+
+  range.each do |n|
+    colour_pixel n y colour
+  end
 end
 
 get_input
