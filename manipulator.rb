@@ -283,7 +283,7 @@ class BitmapManipulator
     x = string_to_int input[1]
     y = string_to_int input[2]
 
-    if (!x.nil? && !y.nil?) then create_image(x, y) else error "Cannot create image with sizes '#{input[1]}'x'#{input[2]}'.\n\nPlease try again with numbers." end
+    if (!x.nil? && !y.nil? && y <= 250) then create_image(x, y) else error "Cannot create image with sizes '#{input[1]}'x'#{input[2]}'.\n\nPlease try again." end
   end
 
   # Attempt to clear the currently stored image (by creating a new one)
@@ -500,7 +500,20 @@ class BitmapManipulator
   # Print out instructions with all of the accepted commands a
   # user can enter.
   def print_help
-    puts "This is help text"
+    puts <<-HELP_TEXT
+Basic Ruby Bitmap manipulator
+-----------------------------
+Commands:
+  I [width] [height]         # Create an image that is [width] wide and [height] high. NOTE [height] cannot exceed 250.
+  C                          # Clear the image contents.
+  L [x] [y] [colour]         # Colour the pixel at [x] [y] the colour [colour].
+  V [x] [y1] [y2] [colour]   # Draw a vertical line starting at co-ordinates [x], [y1] and ending at [x], [y2] (inclusive).
+  H [x1] [x2] [y] [colour]   # Draw a horizontal line starting at co-ordinates [x1], [y] and ending at [x2], [y] (inclusive).
+  F [x] [y] [colour]         # Fill all pixels that are the same colour as image[x, y] and touching with the colour [colour].
+  R [direction "H" || "V"]   # Reflect (flip) the image either vertically or horizontally.
+  S                          # Show the image as it currently is.
+  X                          # Exit - close out of the application.    
+    HELP_TEXT
     get_input
   end
 
