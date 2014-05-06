@@ -107,6 +107,9 @@ class BitmapManipulator
   # @param [Char] Colour The colour to be entered.
   def colour_pixel(x, y, colour)
     @image[x][y] = colour
+
+    # Ask for more input
+    get_input
   end
 
   # Draw a vertical line within our bitmap.
@@ -173,6 +176,8 @@ class BitmapManipulator
         attempt_image_clear
       when "S" # Show the image stored
         show_image
+      when "L"
+        attempt_pixel_colour input # Colour a specific pixel within our image
       end
     end
 
@@ -186,12 +191,14 @@ class BitmapManipulator
     get_input
   end
 
+  # Attempt to create an image using the user's provided input.
+  #
   # Check the user's input, ensuring that the data
   # required is both present and in the correct format
   #
-  # @param 
+  # @param [Array] Input The input array that the user has entered i.e. ['I', '102', '303']
   def attempt_image_creation(input)
-    #Get the X and Y values or nil
+    # Get the X and Y values or nil
     x = string_to_int input[1]
     y = string_to_int input[2]
 
@@ -203,6 +210,36 @@ class BitmapManipulator
     if !@image.nil? then create_image(@most, @number) else error "Cannot clear an image that doesn't exist.\n\nTry running 'I 1 2' first and try again." end
   end
 
+  # Attempt to create an image using the user's provided input.
+  #
+  # Check the user's input, ensuring that the data
+  # required is both present and in the correct format
+  #
+  # @param [Array] Input The input array that the user has entered i.e. ['I', '102', '303']
+  def attempt_pixel_colour(input)
+    # Do not proceed if there is no image
+    if @image.nil?
+      error "Cannot colour a pixel if there is no image.\n\nTry running 'I 1 2' first and try again."
+    else
+      # Get the X and Y values or nil
+      x = string_to_int input[1]
+      y = string_to_int input[2]
+
+      # Check the colour value is acceptable
+      colour = string_to_colour input[3]
+
+      # Check our colour first
+      if colour.nil?
+        error "Cannot colour pixel with the value entered:\n  - Colours can only be one character long i.e. 'R' not 'Red'.\n  - Colours must be uppercase i.e. 'R' not 'r'.\n\nPlease try again with a valid colour."
+      else
+        # Make sure that the x & y values are not nil and that they are in-bounds (adjusting for 1 => 0)
+        if ((!x.nil? && !y.nil?) && (x-1 <= @most && y-1 <= @number)) then colour_pixel(x-1, y-1, colour) else error "Cannot colour pixel '#{input[1]}'x'#{input[2]}'.\n\nPlease try again with valid co-ordinates." end
+      end
+
+    end
+  end
+  
+
   # Convert the string passed into an integer to be used as
   # co-ordinated in our bitmap.
   #
@@ -210,6 +247,27 @@ class BitmapManipulator
   # @return [Integer] Int The converted integer OR NIL
   def string_to_int(string)
     (string.nil?)? nil : string.delete(',').to_i # Allow for 2,364 => 2364 conversion
+  end
+
+  # Check the string passed and see if it meets the
+  # criteria for a valid colour. If not, return nil
+  # 
+  # @param [String] String The string to be checked
+  # @return [String] Colour The string if it is valid OR NIL
+  def string_to_colour(string)
+    error = false
+
+    # Make sure there is a string
+    if string.nil?
+      error = true
+    else
+      # Check the length
+      error = true if string.length != 1
+      # Check the case
+      error = true if !string.upcase!.nil?
+    end
+
+    (error)? nil : string
   end
 
   # Create an error output and then ask for more input from the user.
