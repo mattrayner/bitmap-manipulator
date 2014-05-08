@@ -2,8 +2,8 @@
 # matrix and colour values
 #
 # @author Matthew Rayner
-# @data 04/04/14
-# @version 0.5
+# @date 04/04/14
+# @version 0.5
 
 # Design Decision:
 #   - Decision to keep the project as vanilla ruby at this stage.
